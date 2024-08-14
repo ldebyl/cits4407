@@ -1,0 +1,55 @@
+between(1)                      between man page                      between(1)
+
+
+
+NAME
+       between - return the number of whole days between two dates.
+
+SYNOPSIS
+       between date1 date2
+
+DESCRIPTION
+       between calculates the number of whole days between two dates. Dates can
+       be specified in either dd/mm/yyyy format, or alternatively in any format
+       accepted by the date command.
+
+OPTIONS
+       date1  Date to calculate the number of days from.
+
+       date2  Date to calculate the number of days to. date1 and date2 are
+              commutative - the number of days returned is always positive.
+
+RETURNS
+       0      Returns 0 if the number of days could be calculated.
+
+EXAMPLES
+       between 01/01/2020 "01/03/2020"
+
+       Calculate the number of days between the 1st of January, 2020 and the 1st
+       of March, 2020.
+
+
+       between "7 days ago", "01/03/2020"
+
+       Calculates the number of days between the date 7 days ago, and the 1st of
+       March 2020.
+
+
+       between tomorrow "next thursday"
+
+       Returns the number of days between the tomorrow and the following
+       Thursday. If the next day is Thursday, the program outputs zero.
+
+
+SEE ALSO
+       date(1)
+
+BUGS
+       No known bugs.
+
+AUTHOR
+       Lee de Byl (10306807@student.uwa.edu.au)
+
+
+
+1.0                               15 April 2020                       between(1)

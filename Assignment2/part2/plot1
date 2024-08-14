@@ -1,0 +1,113 @@
+#!/bin/bash
+
+###############################################################################
+# CITS4407 Assignment 2, Part 2
+# Lee de Byl (10306807)
+# University of Western Australia
+#
+# Generates a plot of cshelp forum usage over time, split by the forum provided
+# for different CSSE units (e.g. help4407).
+#
+# Reads source data from the file specified as the first parameter, or stdin
+# if not provided. Outputs the resulting report in HTML format to stdout.
+# e.g. ./plot2 < source_log.txt > report2.html
+###############################################################################
+
+# make_series converts data in the following format:
+#       URL     x       y
+# into JavaScript Object Notation:
+#       {x: [...], y: [...], type: "...", name:"$1"}
+#
+# Parameters:
+#       1:      Data to produce the series from
+#       2:      Forum to produce the usage data for.
+make_series() {
+    data="$1"
+    forum="$2"
+    data=$(grep "$forum" <<< $1)
+    printf '{x: [%s], ' "$(cut -f2 <<<$data| paste -sd,)"
+    printf 'y: [%s], type:"scatter", name:"%s", line: {shape: "spline"}},\n' "$(cut -f3 <<<$data| paste -sd,)" "$forum"
+}
+
+# Prepares data for the report from the raw source data.
+# Outputs tab seperated data with forum name, date and
+# visit count. Note that the data needs to be sorted
+# for plotly.
+# Note that this process assumes that sorting is
+# *not* available in awk.
+function prepare_data() {
+    awk '
+        BEGIN {FS="[\" \]\[]"; OFS="\t"} 
+        $10 ~ /help/{
+            date=substr($5, 1, 11)
+            match($10, /help[0-9]+/)
+            forum = substr($10, RSTART, RLENGTH)
+            # Round minute to the nearest 15
+            visits[forum,date] += 1
+        }
+        END {
+            for (key in visits) {
+                split(key,fields,SUBSEP)
+                date=fields[2]
+                # Convert the date from d/mmm/y to y-m-d
+                # This is required for Plotly to handle
+                # the date axis correctly.
+                gsub("/","-", date)
+                cmd="date -d " date " +%Y-%m-%d"
+                cmd | getline date
+                # Without the line below, the getline pipe above *sometimes*
+                # does not work. Explicitly close the pipe.
+                close(cmd)
+                print fields[1], "\"" date "\"", visits[key]
+            }
+        }
+    ' "$1" | sort
+}
+
+function output_all_series() {
+    d=$(prepare_data "$1")
+    series=$(cut -f1 <<<"$d" | sort | uniq)
+    axis=$(cut -f2 <<<"$d" | sort | uniq)
+    printf "var data=[\n"
+    for forum in $series
+    do
+        make_series "$d" "$forum"
+    done
+
+    printf "];\n"
+} 
+
+
+cat <<'HEADER'
+<!DOCTYPE html>                                                                                                   
+<html>
+    <head>
+    <meta charset="utf-8"/>        
+    <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+    <body>
+        <div id='chartDiv' style='height:100vh'></div>
+    </body>
+        <script>
+HEADER
+
+output_all_series "$1"
+
+cat <<'FOOTER'
+            var chartDiv=document.getElementById('chartDiv');
+            var layout = {
+              xaxis: {
+                type: 'date',
+                title: 'Activity Date'
+              },
+              yaxis: {
+                title: 'Hits'
+              },
+              title:'UWA Department of Computer Science - Help Forum Activity (Hits)'
+            };
+            Plotly.plot(chartDiv, data, layout);
+        </script>
+    </body>
+</html>
+FOOTER
+
+

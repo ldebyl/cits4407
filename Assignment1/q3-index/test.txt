@@ -1,0 +1,18 @@
+NAME
+       <mawk> - pattern scanning and text proceing language
+
+SYNOPSIS
+       <mawk> [-W option] [-F value] [-v var=value] [--] '<program> text' [file ...]
+       <mawk> [-W option] [-F value] [-v var=value] [-f <program>-file] [--] [file ...]
+
+DESCRIPTION
+       <mawk>  is  an  <interpreter>  for the <AWK> Programming Language.  The <AWK> language is useful for manipulation of
+       data files, text retrieval and processing, and for prototyping and experimenting with algorithms.  <mawk> is a
+       new awk meaning it implements the <AWK> language as defined in <Aho>, <Kernighan> and <Weinberger>, The <AWK> Program‐
+       ming Language, Addison-Wesley Publishing, 1988 (hereafter referred to as the <AWK> book.)   <mawk>  conforms  to
+       the  <POSIX> 1003.2 (draft 11.3) definition of the <AWK> language which contains a few features not described in
+       the <AWK> book, and <mawk> provides a small number of extensions.
+
+       An <AWK> <program> is a sequence of pattern {action} pairs and function definitions.  Short <program>s are entered
+       on  the  command line usually enclosed in ' ' to avoid shell interpretation.  Longer <program>s can be read in
+       from a file with the -f option.  Data  input is read from the list of files on  the  command  line  or  from

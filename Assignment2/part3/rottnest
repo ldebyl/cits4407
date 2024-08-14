@@ -1,0 +1,418 @@
+#!/bin/bash
+
+###############################################################################
+# CITS4407 Assignment 2, Part 3
+# Lee de Byl (10306807)
+# University of Western Australia
+#
+# Finds a public transport route between the user's current physical location
+# and the Rottnest Island Ferry terminal in Fremantle. Given a latitude and
+# longitude as (numeric) command line arguments, attempts to find a route
+# via Transperth that would have the user arrive in time to catch the 3:30pm
+# ferry.
+#
+# Usage: ./rottnest.sh [-d "departure time"] latitude longitude
+#
+# The proposed route is written to standard out, with times and instructions in
+# separate tab delimited columns. If a viable route is not found, an error
+# is written to stderr, and the script returns with an error code of 1.
+#
+# The script can be run with an optional argument -d "time" which specifies
+# the effective departure time. This allows routes to be simulated at different
+# dates and times, and defaults to NOW if unspecified. "time" may be any date
+# string interpretable by the date command -- for example, "12 hours ago".
+#
+# No consideration is given to finding the shortest route in terms of travel
+# time, nor finding the latest possible journey to minimise stopovers or
+# waiting time. The route is based on finding the earliest arrival time
+# based on the effective departure time.
+#
+# IMPLEMENTATION DETAILS
+#
+# Routes are defined as a series of functions that update two global variables,
+# last_arrival and last_station. Successive routing functions read and update
+# these global variables as a means of passing state to successive functions,
+# whilst outputing instructions to stdout. Should a route fail, for example.
+# the destination is unreachable from last_station, the function will exit
+# with a non-zero return value.
+#
+# The script assumes that awk does *not* support GNU extensions, such as
+# sorting.  
+#
+# Routes are built using the database of stops, stop times, trips and 
+# the trip calendar provided by the Public Transport Authority. Exceptions
+# to regularly scheduled service *are* also considered, however the transit
+# times between stops within a station are not utilised in trip planning. This
+# only affects trips that are transiting directly into and out of Perth station
+###############################################################################
+
+# Configuration Parameters
+
+FREMANTLE_ID=87                 # Station ID of Fremantle Train Station
+PERTH_ID=56                     # Station ID of Perth Train Station
+PERTH_UNDERGROUND_ID=64         # Station ID of Perth Underground Station
+FERRY_TIME="15:30:00"           # Departure time of the ferry
+FERRY_TRANSFER_TIME=300         # Assumed walking time from Fremantle Station
+                                # to Fremantle Ferry Terminal
+WALKING_SPEED="0.8333"          # Assumed walking speed, in metres per second.
+LAZINESS_DISTANCE=1000          # Maximum distance user can be from a train station.
+
+# Source data files
+STOPS_FILE=stops.txt
+STOP_TIMES_FILE=stop_times.txt
+CALENDAR=calendar.txt
+CALENDAR_DATES=calendar_dates.txt
+TRIPS_FILE=trips.txt
+
+###############################################################################
+
+# Set options for this shell
+shopt -s expand_aliases        # Expand aliases within this script (see "cawk")
+set -o pipefail                # Cause pipes to fail if any component exits non-zero
+alias cawk="awk -F,"           # Got tired of typing this.
+
+effective_date='NOW'           # Effective departure time (may be overriden
+                               # from command line with -d argument.
+
+##################
+# TIME FUNCTIONS #
+##################
+
+# TIME OFFSET
+# Given a time (in any format interpretable by the date command),
+# adds the specified number of seconds and outputs the result
+# in HH:MI:SS
+function time_offset() {
+    time="$1"
+    seconds=$2
+    let epoch=$(date -d "$time" +%s)+$seconds
+    date -d "@$epoch" +%H:%M:%S
+}
+
+
+# WALKING TIME
+# Given a time (HH:MI:SS), and a distance in meters,
+# calculates the time in seconds taken to walk.
+function walking_time() {
+    secs=$(echo "scale=0; $2/$WALKING_SPEED" | bc)
+    time_offset $1 $secs
+}
+
+
+# GET STATIONS
+# Outputs a list of all rail stations from the stops file. These are entries
+# with a location_type of 1 that have a supported_mode containing Rail.
+# Sub-stops are not included. The file header is excluded.
+# Returned field order is as per the source file.
+function get_stations () {
+    cawk 'NR>1 && index($10, "Rail")>0 && $1=="1"' "$STOPS_FILE"
+}
+
+
+# GET NEAREST STATION
+# Given a latitude and longitude, outputs the nearest rail station.
+# Outputs distance, ID, name, latitude, longitude
+function get_nearest_station () {
+    get_stations | cawk -v lat="$1" -v lon="$2" '
+        BEGIN {OFS=","}
+        {
+        # Calculate the haversine distance to this stop
+        # from the current location.
+        ("./haversine " $7 " " $8 " " lat " " lon) | getline distance
+        print distance, $3, $4, $5, $6
+        }
+    ' | sort -t, -k1n,1 | head -n1
+}
+
+# GET STATION
+# Returns details of the specified station (by station ID).
+#
+# PARAMETERS:
+#       1: ID of the station
+#
+# OUTPUTS:
+#       Station Name, Latitude, Longitude 
+#
+# RETURNS:
+#       0: Station Details were successfully returned
+#       1: Station Details could not be returned.
+
+function get_station() {
+    get_stations | cawk -v station_id=$1 'BEGIN {OFS=","} $3 == station_id {print $5, $7, $8; exit 0} END {exit 1}'
+}
+
+# GET STOPS BY STATION
+# Given a station number, returns all the stops for that station,
+# sorted by Stop ID (for use as a join key).
+# All fields are returned from the stops file.
+function get_stops_by_station() {
+    # Gets rail records from stops.txt
+    # by station number
+    cawk -v stop_no=$1 '($1==0 && $2==stop_no && index($10,"Rail"))' $STOPS_FILE |
+         sort -t, -k3n,3
+}
+
+####################################
+# CALENDAR AND TIMETABLE FUNCTIONS #
+####################################
+
+# GET STOP TIMES
+# Removes the header from the stop times file and sorts on
+# the stop_id column as a join column.
+function get_stop_times() {
+    tail -n+2 "${STOP_TIMES_FILE}" | sort -t, -k4n,4
+}
+
+# RUNNING SERVICES
+# Returns a newline separated list of services running
+# on the specified day of week (1-7) and date (YYYYMMDD),
+# using calendar.txt and calendar_dates.txt
+function running_services() {
+    cat <(cawk -v dow=$1 -v date=$2 '
+            BEGIN {
+                # Get the current day of the week as an integer (Monday = 1),
+                # and convert it to the appropriate column number in the
+                # calendar file for lookup.
+                dow_column=dow + 1
+
+                # Convert the date today to a string in the same format
+                # as the calendar file. As this goes from most significant (year)
+                # to least significant, this can be compared using string comparisons
+            }
+                # Skip header row and return list of Service IDs that
+                # are running today.
+                NR > 1 {
+                    if ($dow_column == 1 && $9 <= date && $10 >= date) {
+                        print $1
+                    }
+
+                }
+        ' "${CALENDAR}" | sort) \
+        <(cawk -v date=$2 'NR > 1 && $date == $2 && $3 == "1" {print $1}' "${CALENDAR_DATES}") | sort | uniq
+}
+
+# SUSPENDED SERVICES
+# Returns a sorted list of services not running on the specified date (YYYYMMDD) due to
+# service exceptions in calendar_dates.txt
+function suspended_services() {
+    cawk -v date=$1 'NR > 1 && $date == $2 && $3 == "2" {print $1}' "calendar_dates.txt" | sort
+}
+
+# GET CALENDAR
+# Returns a list of service IDs running on the global effective date, accounting
+# for regularly scheduled services and service exceptions.
+function get_calendar() {
+    dow=$(date -d "${effective_date}" +'%u')
+    date=$(date -d "${effective_date}" +'%Y%m%d')
+    # Get a list of services running today, and perform an anti-join with
+    # suspended services by exception.
+    join -o1.1 -v1 <(running_services $dow $date) <(suspended_services $date)
+}
+
+# TRIPS RUNNING TODAY
+# Finds all the trip IDs (rail and other) running as at the global effective date.
+function trips_running_today() {
+    get_calendar | sort | join -o 2.3 -t, -2 2 - <(tail -n+2 ${TRIPS_FILE} | sort -t "," -k2b,2)
+}
+
+
+# STATION STOPS
+# Gets all the timetabled services for the specified Station ID
+# based on the effective date. Outputs a comma separated list:
+#       parent_station, stop_id, stop_name,trip_id,arrival_time,departure_time,stop_sequence
+function station_stops() {
+    join -t, -1 3 -2 4 -o 1.2,1.3,1.5,2.1,2.2,2.3,2.5 <(get_stops_by_station $1) <(get_stop_times)
+}
+
+
+# TODAYS STATION STOPS
+# Gets today's stops at the given station, based on the calendar of trips
+# running today.
+function todays_station_stops() {
+    join -t, -1 4 -2 1 <(station_stops $1 | sort -t, -k4n,4) <(trips_running_today | sort)
+}
+
+
+#####################
+# ROUTING FUNCTIONS #
+#####################
+
+# RESET ORIGIN
+# Resets the last station and last station arrival to the
+# origin values. This allows multiple trips to be trialled.
+reset_origin() {
+    last_arrival="$origin_arrival"
+    last_station="$origin_station"
+}
+
+# ROUTE TRAIN TRIP
+# Given a destination Station ID, finds a route between it and the last_station ID
+# that are running today after the specified time (use 00:00:00 for no restriction).
+function route_train_trip () {
+    destination_station=$1
+    
+    # Get timetabled stops for both the origin and destination Station IDs, join
+    # based on the trip number, then filter the results where the stop number
+    # of the destination station is higher than the stop number of the origin
+    # station.
+    result=$(join -t, -j 1 <(todays_station_stops $last_station) <(todays_station_stops $destination_station) |
+        sort -t, -k6,6 | 
+        cawk -v dtime="$last_arrival" 'BEGIN {status=1;OFS="\t"} $13 > $7 && $6 >= dtime {print $6, "Board train at " $4, $2, $3; print $11, "Arrive at " $10, $8, $9; status=0; exit} END {exit status}') 
+    
+    # Get the exit status from AWK - 0 if successfully routed, 1 otherwise.
+    status=$?
+
+    # Read the result into variables.
+    IFS=$'\t' read last_arrival last_instruction last_station last_platform <<< $(tail -1 <<<"$result")
+    if [ $status -eq 0 ]
+    then
+        echo "$result" | cut -f1,2
+    fi
+    return $status
+}
+
+
+# ROUTE STATION WALK
+# Routes the user from a latitude and longitude to the nearest station.
+# Returns 1 and displays an error to stderr if the station exceededs LAZINESS_DISTANCE
+# Stores the result in origin_station and origin_arrival for use if an alternative
+# route needs to be attempted.
+function route_station_walk() {
+    lat=$1
+    lon=$2
+    IFS=, read nearest_distance nearest_station nearest_name <<< $(get_nearest_station $lat $lon | cut -f 1,2,4 -d,)
+    print_leg "$departure_time" "Walk ${nearest_distance} meters to ${nearest_name}"
+    if [ $nearest_distance -gt ${LAZINESS_DISTANCE} ] 
+    then
+       error "Nearest Station is too far away. Aborting route." 
+       return 1
+    fi
+    local arrival_time=$(walking_time $departure_time $nearest_distance)
+    print_leg "$arrival_time" "Arrive at ${nearest_name}"
+    origin_station="$nearest_station"
+    origin_arrival="$arrival_time"
+}
+
+
+# ROUTE DIRECT
+# Attempt to find a direct route between the origin station
+# and Fremantle Train Station. Prints the earliest available
+# route to standard out and returns 0 if a successful route
+# was found.
+function route_direct() {
+    reset_origin
+    route_train_trip $FREMANTLE_ID 
+}
+
+# ROUTE VIA PERTH
+# Attempt to find an indirect route between the origin station
+# and Fremantle Train Station via Perth. Prints the earliest available
+# route to standard out and returns 0 if a successful route
+# was found.
+function route_via_perth() {
+    reset_origin
+    route_train_trip $PERTH_ID && route_train_trip $FREMANTLE_ID
+}    
+
+# ROUTE STATION TRANSFER
+# Generates a walking leg between two stations, based on distance.
+# The station of departure should be in a global
+# variable called last_station.
+function route_station_transfer() {
+    # Read details of the two stations into variables for
+    # display purposes.
+    IFS=, read sname slat slong <<< $(get_station $last_station)
+    IFS=, read dname dlat dlong <<< $(get_station $1)
+    distance=$(./haversine $slat $slong $dlat $dlong)
+    print_leg $last_arrival "Walk $distance meters from $sname to $dname"
+    last_arrival=$(walking_time "$last_arrival" $distance)
+    print_leg $last_arrival "Arrive at $dname"
+    last_station=$1
+} 
+
+# ROUTE VIA UNDERGROUND
+# Attempt to find an indirect route between the origin station
+# and Fremantle Train Station. Prints the earliest available
+# route to standard out and returns 0 if a successful route
+# was found.
+route_via_underground() {
+    reset_origin
+    route_train_trip $PERTH_UNDERGROUND_ID &&
+          route_station_transfer $PERTH_ID &&
+            route_train_trip $FREMANTLE_ID 
+}
+
+# ROUTE FERRY TRANSFER
+# Routes the journey between Fremantle Station and the Ferry Terminal,
+# using the $FERRY_TRANSFER_TIME as the assumed walking time.
+function route_ferry_transfer() {
+    print_leg $last_arrival "Walk from Fremantle Station to Ferry"
+    last_arrival=$(time_offset "$last_arrival" $FERRY_TRANSFER_TIME)
+    print_leg $last_arrival "Arrive at Ferry Terminal"
+    last_station=0
+}
+
+# Verifies that the departure time from the origin
+# is prior to the ferry departure time.
+function check_departure_time() {
+    echo $departure_time
+    if [[ $departure_time > $FERRY_TIME ]] 
+    then
+        error "Ferry has already departed. Try again another time."
+        return 1        
+    fi
+    return 0
+}
+
+# Verifies that the last leg of the journey
+# is prior to the ferry departure time.
+function check_arrival_time() {
+    if [[ $last_arrival > $FERRY_TIME ]]
+    then
+        error "Could not generate route to meet ferry departure time."
+        return 1
+    fi
+    return 0
+}
+
+##########################
+# INPUT/OUTPUT FUNCTIONS #
+##########################
+
+# Outputs the leg of a route to stdout
+function print_leg() { printf "%s\t%s\n" "$@"; }
+
+# Output a string to stderr
+function error() { echo "$@" >&2; }
+  
+
+####################
+# MAIN ENTRY POINT #
+####################
+
+# Process Command Line Options
+while getopts ":d:" opt; do
+    case "${opt}" in
+        d)
+            effective_date=${OPTARG}
+            ;;
+        *)
+            # Break out of the loop to stop
+            # getopts trying to read negative lats/longs
+            # as options
+            break
+            ;;
+    esac
+done
+shift $(($OPTIND-1))
+
+# Calculate the effective departure time (HH:MM:SS)
+# and effective departure date/time.
+departure_time=$(date -d "$effective_date" +%H:%M:%S)
+departure_date_time=$(date -d "$effective_date")
+printf "Effective Departure Time: %s\n" "$departure_date_time"
+
+# Perform the actual routing.
+check_departure_time && route_station_walk "$1" "$2" &&
+  { route_direct || route_via_perth || route_via_underground; } &&
+  route_ferry_transfer && check_arrival_time

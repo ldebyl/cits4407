@@ -1,0 +1,110 @@
+#!/bin/bash
+
+###############################################################################
+# CITS4407 Assignment 2, Part 2
+# Lee de Byl (10306807)
+# University of Western Australia
+#
+# Generates a bar plot of most popular cshelp topics
+# for different CSSE units (e.g. help4407).
+#
+# Reads source data from the file specified as the first parameter, or stdin
+# if not provided. Outputs the resulting report in HTML format to stdout.
+# e.g. ./plot2 < source_log.txt > report2.html
+###############################################################################
+
+# Top N forum posts to plot
+TOPN=30
+# Maximum Label Length
+MAX_LENGTH=50
+
+
+function make_xy() {
+    printf 'var text=[%s];' "$(cut -f1 <<<$1| paste -sd,)"
+    printf 'var data={'
+    printf 'y:text,\n'
+    printf 'x:[%s],\n' "$(cut -f2 <<<$1| paste -sd,)"
+    printf 'text: text, textposition:"auto", type:"bar", orientation: "h"};\n' 
+}
+
+# Prepares data for the report from the raw source data.
+# Outputs tab seperated data with forum name, date and
+# visit count. Note that the data needs to be sorted
+# for plotly.
+# Note that this process assumes that sorting is
+# *not* available in awk.
+function prepare_data() {
+
+    # Create hit count by CS Help forum
+
+    awk '
+        BEGIN {FS="[\" \]\[]"; OFS="\t"} 
+        $10 ~ /\/run\/help[0-9]+\?.*a=[0-9]+/{
+            #date=substr($5, 1, 11)
+            match($10, /\/run\/help[0-9]+/)
+            uri = substr($10, RSTART, RLENGTH)
+            match($10, /a=[0-9]+/)
+            postid = substr($10, RSTART, RLENGTH)
+            url=sprintf("https://secure.csse.uwa.edu.au%s?%s", uri, postid)
+            post_count[url] += 1
+        }
+        END {
+            for (url in post_count) {
+                print post_count[url], url
+            }
+        }
+    ' "$1" |
+
+    # Sort the output by count numerically, and take the top N results
+    sort -rn |
+
+    head -n${TOPN} |
+
+    while read -r cnt url rest; do
+        # Use curl to get the webpage for each post, grep to extract the tile, and expand
+        # to convert tabs to spaces. Also create HTML breaks to wrap long titles
+        title=$(curl "${url}" | grep -oP '(?<=<title>).*(?=</title>)' | expand | 
+            tr '"' ' ' | cut -b1-${MAX_LENGTH} )
+        printf '"%s"\t%d\n' "${title}" "${cnt}"
+    done
+}
+
+
+cat <<'HEADER'
+<!DOCTYPE html>                                                                                                   
+<html>
+    <head>
+    <meta charset="utf-8"/>        
+    <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+    <body>
+        <div id='chartDiv' style='height:100vh'></div>
+    </body>
+        <script>
+HEADER
+
+z=$(prepare_data $1)
+make_xy "$z"
+
+cat <<'FOOTER'
+            var chartDiv=document.getElementById('chartDiv');
+            var layout = {
+                height: 2200,
+                yaxis: {
+                  title: 'Forum Post',
+                  type: 'category',
+                  automargin: true,
+                  autotick: true,
+                  showticklabels: false
+              },
+              xaxis: {
+                title: 'Visits'
+              },
+              title:'UWA Department of Computer Science - Help Forum Activity (Hits)'
+            };
+            Plotly.plot(chartDiv, [data], layout);
+        </script>
+    </body>
+</html>
+FOOTER
+
+

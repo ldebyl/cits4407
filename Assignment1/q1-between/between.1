@@ -1,0 +1,42 @@
+.\" Manpage for between.
+.\" Contact 10306807@student.uwa.edu.au to correct errors or typos.
+.TH between 1 "15 April 2020" "1.0" "between man page"
+.SH NAME
+between \- return the number of whole days between two dates.
+.SH SYNOPSIS
+between date1 date2
+.SH DESCRIPTION
+between calculates the number of whole days between two dates. Dates can be specified in either dd/mm/yyyy format, or alternatively in any format accepted by the date command.
+.SH OPTIONS
+.IP "date1"
+Date to calculate the number of days from.
+.IP "date2"
+Date to calculate the number of days to. date1 and date2 are commutative - the number of days returned is always positive. 
+.SH RETURNS
+.IP 0
+Returns 0 if the number of days could be calculated.
+.SH EXAMPLES
+.TP
+between 01/01/2020 "01/03/2020"
+.TP
+.PP
+Calculate the number of days between the 1st of January, 2020 and the 1st of March, 2020.
+
+.TP
+between "7 days ago", "01/03/2020"
+.TP
+.PP
+Calculates the number of days between the date 7 days ago, and the 1st of March 2020.
+
+.TP
+between tomorrow "next thursday"
+.TP
+.PP
+Returns the number of days between the tomorrow and the following Thursday. If the next day is Thursday, the program outputs zero.
+ 
+.SH SEE ALSO
+date(1)
+.SH BUGS
+No known bugs.
+.SH AUTHOR
+Lee de Byl (10306807@student.uwa.edu.au)

@@ -1,0 +1,89 @@
+#!/bin/bash
+
+###############################################################################
+# CITS4407 Assignment 2, Part 2
+# Lee de Byl (10306807)
+# University of Western Australia
+#
+# Produces a plot of usage data from the CSSE secure webserver logs.
+# Shows total number of bytes transferred in 15 minute intervals.
+# Uses plotly.js for charting.
+#
+# Reads source data from the specified file (or stdin, if not specified).
+# Outputs the report in HTML format to stdout.
+# 
+# Example usage: ./plot1 < securelog.txt > usage_report.html
+############################################################################### 
+
+# make_xy converts two column tabular data
+# to a JavaScript dictionary with lists
+# of x and y values, suitable for Plotly.
+make_xy() {
+    printf 'var data={'
+        printf 'x:[%s],' "$(cut -f1 <<<$1| paste -sd,)"
+            printf 'y:[%s],' "$(cut -f2 <<<$1| paste -sd,)"
+            
+            printf 'fill: "tozeroy", line: {shape: "spline"}};'
+    }
+
+prepare_data() {
+    # Prepare the usage data using awk
+    # to calculate a histogram of usage
+    # by 15m intervals.
+    data=$(awk '
+        BEGIN {FS="[\" \]\[]"; OFS="\t"} 
+        {
+            hour=substr($5, 13,2)
+            minute=substr($5, 16,2)
+            # Round minute to the nearest 15
+            minute=sprintf("%d", minute/15) * 15
+            x=sprintf("%02d:%02d", hour, minute)
+            bytes[x] += $14
+        }
+        END {
+            for (hour in bytes) {
+                print "\""hour"\"", bytes[hour]
+            }
+        }
+        ' $1 | sort)
+    
+    # Output the chart x/y data
+    make_xy "${data}"
+}
+
+#Produce the report, reading the raw data from $1
+cat <<'HEADER'
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8"/>        
+        <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+    </head>
+    <body>
+        <div id='chartDiv' style='height:100vh;'></div>
+    </body>
+    <script>
+HEADER
+
+prepare_data "$1"
+
+cat << 'FOOTER'
+            var layout = {
+              xaxis: {
+                title: 'Date'
+              },
+              yaxis: {
+                title: 'Bytes Transferred'
+              },
+              title:'UWA Department of Computer Science Webserver - Traffic'
+            };
+            var chartDiv=document.getElementById('chartDiv');
+            Plotly.plot(chartDiv, [data], layout);
+    </script>
+</html>
+FOOTER
+
+
+
+
+

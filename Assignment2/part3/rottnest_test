@@ -1,0 +1,34 @@
+#!/bin/bash
+
+###############################################################################
+# CITS4407 Assignment 2, Part 3
+# Lee de Byl (10306807)
+# University of Western Australia
+#
+# Performs simple tests of the rottnest route planning script.
+###############################################################################
+
+# Auburn Grove
+AG="-32.1551978012 115.8578771850"
+# Karrakatta
+KK="-31.968315 115.796300555556"
+# Bayswater
+BW="-31.919387 115.914691"
+# Osborne Park
+OP="-31.911849 115.826417"
+
+echo "Departing from Auburn Grove"
+time ./rottnest $AG
+echo "Departing from Karrakatta"
+time ./rottnest $KK
+echo "Departing from Bayswater"
+time ./rottnest $BW
+echo "Departing from Osborne Park"
+time ./rottnest $OP
+
+echo "Departing from Karrakatta"
+time ./rottnest -d "11:00am" $KK
+echo "Departing from Osborne Park"
+time ./rottnest -d "09:30am" $OP
+echo "Departing from Auburn Grove"
+time ./rottnest -d "03:00pm" $AG

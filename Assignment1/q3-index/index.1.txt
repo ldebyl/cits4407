@@ -1,0 +1,75 @@
+index(1)                         index man page                         index(1)
+
+
+
+NAME
+       index - generates a line number index of tagged terms from a text
+       document.
+
+SYNOPSIS
+       index [filename]
+
+DESCRIPTION
+       Generates an index of lines numbers containing tagged terms. A tag
+       consists of a term or phrase enclosed in angle brackets (<>). A term or
+       phrase may contain characters, spaces, numbers and punctuation (with the
+       exception of a closing bracket). Multiple tags may appear in a single
+       line. Where the same tag appears multiple times in a single line, the
+       line is only include once in the generated index.
+
+       The index is not case sensitive - all tags will be converted to
+       lowercase.
+
+       The index is not sorted by default. If sorting is desired, a utility such
+       as sort can be used.
+
+OPTIONS
+       filename
+              File to generate the index from. If not specified, the index is
+              generated from stdin.
+
+RETURNS
+       0      Returns 0 if no errors occured.
+
+EXAMPLES
+       An example execution on a tagged version of the begging lines of the mawk
+       man page:
+
+              <mawk>  is  an  <interpreter>  for the <AWK> Programming Language.
+              The <AWK> language is useful for manipulation of data files, text
+              retrieval and processing, and for prototyping and experimenting
+              with algorithms.  <mawk> is a new awk meaning it implements the
+              <AWK> language as defined in <Aho>, <Kernighan> and <Weinberger>,
+              The <AWK> Program‐ ming Language, Addison-Wesley Publishing, 1988
+              (hereafter referred to as the <AWK> book.)   <mawk>  conforms  to
+              the  <POSIX> 1003.2 (draft 11.3) definition of the <AWK> language
+              which contains a few features not described in the <AWK> book, and
+              <mawk> provides a small number of extensions.
+
+              An <AWK> <program> is a sequence of pattern {action} pairs and
+              function definitions.  Short <program>s are entered on  the
+              command line usually enclosed in ' ' to avoid shell
+              interpretation.  Longer <program>s can be read in from a file with
+              the -f option.  Data  input is read from the list of files on  the
+              command  line  or  from
+
+       Invoking the indexing utility:
+       $ ./index test.txt
+       posix 13
+       program 5,6,16,17
+       aho 11
+       awk 9,11,11,12,13,14,16
+       kernighan 11
+       interpreter 9
+       weinberger 11
+       mawk 2,5,6,9,10,12,14
+
+BUGS
+       None known.
+
+AUTHOR
+       Lee de Byl (10306807@student.uwa.edu.au)
+
+
+
+1.0                               15 April 2020                         index(1)

@@ -1,0 +1,116 @@
+Departing from Auburn Grove
+Effective Departure Time: Fri  5 Jun 13:55:55 AWST 2020
+13:55:55
+13:55:55	Walk 0 meters to "Aubin Grove Stn"
+13:55:55	Arrive at "Aubin Grove Stn"
+13:59:00	Board train at "Aubin Grove Stn Platform 1"
+14:21:00	Arrive at "Perth Underground Stn Platform 1"
+14:21:00	Walk 162 meters from "Perth Underground Stn" to "Perth Stn"
+14:24:14	Arrive at "Perth Stn"
+14:30:00	Board train at "Perth Stn Platform 7"
+15:00:00	Arrive at "Fremantle Stn Platform 2"
+15:00:00	Walk from Fremantle Station to Ferry
+15:05:00	Arrive at Ferry Terminal
+
+real	0m5.835s
+user	0m0.070s
+sys	0m0.044s
+
+Departing from Karrakatta
+Effective Departure Time: Fri  5 Jun 13:56:01 AWST 2020
+13:56:01
+13:56:01	Walk 15 meters to "Karrakatta Stn"
+13:56:19	Arrive at "Karrakatta Stn"
+14:11:00	Board train at "Karrakatta Stn Platform 2"
+14:30:00	Arrive at "Fremantle Stn Platform 2"
+14:30:00	Walk from Fremantle Station to Ferry
+14:35:00	Arrive at Ferry Terminal
+
+real	0m1.461s
+user	0m0.023s
+sys	0m0.004s
+
+Departing from Bayswater
+Effective Departure Time: Fri  5 Jun 13:56:02 AWST 2020
+13:56:02
+13:56:02	Walk 249 meters to "Bayswater Stn"
+14:01:00	Arrive at "Bayswater Stn"
+14:14:00	Board train at "Bayswater Stn Platform 1"
+14:26:00	Arrive at "Perth Stn Platform 7"
+14:30:00	Board train at "Perth Stn Platform 7"
+15:00:00	Arrive at "Fremantle Stn Platform 2"
+15:00:00	Walk from Fremantle Station to Ferry
+15:05:00	Arrive at Ferry Terminal
+
+real	0m4.276s
+user	0m0.020s
+sys	0m0.020s
+
+Departing from Osborne Park
+Effective Departure Time: Fri  5 Jun 13:56:06 AWST 2020
+13:56:06
+13:56:06	Walk 428 meters to "Glendalough Stn"
+14:04:39	Arrive at "Glendalough Stn"
+14:05:00	Board train at "Glendalough Stn Platform 1"
+14:11:00	Arrive at "Perth Underground Stn Platform 2"
+14:11:00	Walk 162 meters from "Perth Underground Stn" to "Perth Stn"
+14:14:14	Arrive at "Perth Stn"
+14:15:00	Board train at "Perth Stn Platform 7"
+14:45:00	Arrive at "Fremantle Stn Platform 2"
+14:45:00	Walk from Fremantle Station to Ferry
+14:50:00	Arrive at Ferry Terminal
+
+real	0m5.790s
+user	0m0.042s
+sys	0m0.017s
+
+Departing from Karrakatta
+Effective Departure Time: Fri  5 Jun 11:00:00 AWST 2020
+11:00:00
+11:00:00	Walk 15 meters to "Karrakatta Stn"
+11:00:18	Arrive at "Karrakatta Stn"
+11:11:00	Board train at "Karrakatta Stn Platform 2"
+11:30:00	Arrive at "Fremantle Stn Platform 2"
+11:30:00	Walk from Fremantle Station to Ferry
+11:35:00	Arrive at Ferry Terminal
+
+real	0m1.529s
+user	0m0.017s
+sys	0m0.011s
+
+Departing from Osborne Park
+Effective Departure Time: Fri  5 Jun 09:30:00 AWST 2020
+09:30:00
+09:30:00	Walk 428 meters to "Glendalough Stn"
+09:38:33	Arrive at "Glendalough Stn"
+09:42:00	Board train at "Glendalough Stn Platform 1"
+09:48:00	Arrive at "Perth Underground Stn Platform 2"
+09:48:00	Walk 162 meters from "Perth Underground Stn" to "Perth Stn"
+09:51:14	Arrive at "Perth Stn"
+10:00:00	Board train at "Perth Stn Platform 7"
+10:30:00	Arrive at "Fremantle Stn Platform 2"
+10:30:00	Walk from Fremantle Station to Ferry
+10:35:00	Arrive at Ferry Terminal
+
+real	0m5.769s
+user	0m0.049s
+sys	0m0.009s
+
+Departing from Auburn Grove
+Effective Departure Time: Fri  5 Jun 15:00:00 AWST 2020
+15:00:00
+15:00:00	Walk 0 meters to "Aubin Grove Stn"
+15:00:00	Arrive at "Aubin Grove Stn"
+15:09:00	Board train at "Aubin Grove Stn Platform 1"
+15:31:00	Arrive at "Perth Underground Stn Platform 1"
+15:31:00	Walk 162 meters from "Perth Underground Stn" to "Perth Stn"
+15:34:14	Arrive at "Perth Stn"
+15:40:00	Board train at "Perth Stn Platform 7"
+16:10:00	Arrive at "Fremantle Stn Platform 2"
+16:10:00	Walk from Fremantle Station to Ferry
+16:15:00	Arrive at Ferry Terminal
+Could not generate route to meet ferry departure time.
+
+real	0m5.805s
+user	0m0.053s
+sys	0m0.008s

@@ -1,0 +1,46 @@
+#!/bin/bash
+###############################################################################
+# index
+# University of Western Australia
+# CITS4407 Assignment 1
+#
+# Generates an index listing cross-referencing tagged terms in a text document
+# to line numbers.
+#
+# See man ./index.1 or index.1.txt for more information.
+#
+# Lee de Byl <10306807@student.uwa.edu.au
+# 15 April 2020
+###############################################################################
+
+# Use grep to find all tags in the document, where a tag is text
+# enclosed in <braces>. The -o parameter returns one match per line.
+# -n includes line numbers along with the matching text.
+# -p enables enhanced regular expression support.
+# Positive look-ahead and look-behind assersions are used to detect
+# matching enclosing brackets without capturing them. 
+grep -onP '(?<=[<]).*?(?=[>])' $1 |
+
+# Take the unique set of matches - the same phrase
+# may occur multiple times on one line.
+
+uniq |
+
+# Use awk to process the line number: match output
+# from grep, and use an associative array to 
+# construct a list of all the lines for each match.
+awk '
+    BEGIN {
+        FS=":"
+    }
+    {
+        $2=tolower($2);
+        A[$2] = A[$2] == "" ? $1 : A[$2] "," $1
+    } END {
+        for (i in A) {
+            print i, A[i]
+    }
+}' |
+
+# Sort the index
+sort

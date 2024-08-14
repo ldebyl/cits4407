@@ -1,0 +1,46 @@
+lotto(1)                         lotto man page                         lotto(1)
+
+
+
+NAME
+       lotto - generates unique random numbers within a given range, as per a
+       typical Australian Lotto draw.
+
+SYNOPSIS
+       lotto [-n] [-r]
+
+DESCRIPTION
+       Generates n unique random numbers, each between 1 and r. The generated
+       numbers are ordered from lowest to highest. By default, 6 random numbers
+       are drawn, from 45 possible numbers.
+
+OPTIONS
+       -n     The number of balls to draw.
+
+       -r     The number of balls to choose from.
+
+RETURNS
+       0      Returns 0 if no errors occured.
+
+SEE ALSO
+       shuf(1)
+
+BUGS
+       The script generates unique random numbers by repeatedly generating a
+       random number until the first unseen random number is generated. The
+       execution time of the script is therefore non-deterministic. In some
+       cases, the script may take longer than average to execute. A future
+       improvement would be to include a data structure that included the
+       remaining available numbers, and randomly select and remove these
+       elements. Alternatively, using an algorithm such as the Knuth-Fisher-
+       Yates shuffling algorithm and taking the top-n elements would be a
+       reasonable alterntive.
+
+       The number of balls to choose from cannot exceed 32,768.
+
+AUTHOR
+       Lee de Byl (10306807@student.uwa.edu.au)
+
+
+
+1.0                               15 April 2020                         lotto(1)

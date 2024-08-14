@@ -1,0 +1,46 @@
+families(1)                      family man page                     families(1)
+
+
+
+NAME
+       families - generates a list of families where all members of a family
+       aboard the Titanic survived.
+
+SYNOPSIS
+       families [filename]
+
+DESCRIPTION
+       The script consumes the Titanic data set available at
+       https://www.kaggle.com/paytontaylor/titanic-dataset-observations which
+       details the list of passengers aboard the Titanic, and whether they
+       survived. From this list, the script generates a list of families where
+       all family members survived.
+
+       For the purpose of this excercise, a family is defined as two or more
+       people having the same surname. The surname is derived from the forth
+       field and consists of all characters up until the first comma.
+
+       The output consists of the sorted, unique names of familes that meet the
+       criteria.
+
+OPTIONS
+       [filename]
+              The filname to read the dataset from. If not provided, the dataset
+              is read from titanicdata.csv
+
+BUGS
+       The script assumes that the input CSV file is specifically formatted as
+       retrieved from the URL above. Behaviour of the program is undefined in
+       other cases and will not robustly handle reformatting by programs such as
+       Excel.
+
+       The program does not perform any validation of the input file format, nor
+       does it check that the input file exists. awk will raise an error if the
+       input file does not exist, or other parsing errors occured.
+
+AUTHOR
+       Lee de Byl (10306807@student.uwa.edu.au)
+
+
+
+1.0                               15 April 2020                      families(1)

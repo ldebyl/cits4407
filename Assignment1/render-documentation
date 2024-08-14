@@ -1,0 +1,9 @@
+#!/bin/bash
+MANWIDTH=80
+
+for i in `find . -iname *.[0-9]`
+do
+	echo "Creating documentation for $i"
+	#groff -t -e -mandoc -Tutf8 $i | col -bx > $i.txt
+	man $i | col -bx > $i.txt
+done

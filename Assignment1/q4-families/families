@@ -1,0 +1,51 @@
+#!/bin/bash
+###############################################################################
+# families
+#
+# Utility to read the Titanic Data Set, as retrieved from
+# https://www.kaggle.com/paytontaylor/titanic-dataset-observations (12 April
+# 2020) and output a list of the families where the entire family survived.
+#
+# See man ./families.1 for further details.
+#
+# Author: Lee de Byl <10306807@student.uwa.edu.au>
+###############################################################################
+# Use (g)awk to read the input file, and use two associative arrays to keep 
+# count of the number of members per family, and the count of persons who
+# survived.
+
+# Get the source file, or use titanicdata.csv by default
+src=${1:-titanicdata.csv}
+
+awk '
+  BEGIN {
+  	# Set input / output field separator
+  	FS=","; OFS=","
+  }
+  # Skip the header row
+  NR > 1 {
+	# Remove the leading slash from the family name
+	gsub("\"", "", $4);
+	# Increase the family member count for this family 
+	cnt[$4]++; 
+	# The second field will contain 1 if the family
+	# member survived, or 0 if they did not. Taking
+	# the sum of this column will give the total 
+	# number of surviving family members.
+	saved[$4] += $2
+  }
+  END {
+  	for (i in cnt) {
+  		# If the number of survivors for each
+		# family equals the number of family
+		# members on board, the entire family
+		# survived. A family must consist of at
+		# least two people to be included.
+		if (cnt[i] > 1 && cnt[i] == saved[i])
+			print i
+      	}
+  }
+  ' ${src} |
+
+# Sort the output      
+sort

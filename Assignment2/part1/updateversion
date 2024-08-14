@@ -1,0 +1,68 @@
+#!/bin/bash
+
+###############################################################################
+# CITS4407 Assignment 2, Part 1
+# Lee de Byl (10306807)
+# University of Western Australia
+#
+# Updates the version number comment in source code files. The name of the
+# program should be specified as the first argument - only comments starting
+# with the specified program name will be update, all other comments will
+# be ignored. All matching version comments in a source file will be updated.
+# C source file, C headers and Makefiles will be updated.
+#
+# If there is a mismatch in versions between files in the input set, a warning
+# will be raised.
+###############################################################################
+
+# Date format for the generated version comment.
+DATE_FORMAT="%a %b %-d %T %Z %Y"
+
+awk -v progname="$1" -v date="$(date +"${DATE_FORMAT}")" '
+	BEGIN {
+		FS=",| *"
+		OFS=""
+		last_version = 0
+		last_file = ""
+                pattern = sprintf("^ *(\/\/|#) *%s *, *version [0-9]+, released .*$", progname)
+	}
+        # If this is the first line of the input file,
+        # create a new temp file to store the results
+        # of the update to.
+	FNR == 1 {
+		command = "/usr/bin/mktemp " FILENAME "XXX.tmp"
+		command | getline tmp
+		tempfiles[FILENAME] = tmp
+
+	}
+        # Search for comments matching the specified format.
+        # Allow whitespace (indents) at the beginning of the 
+        # comment.
+	$0 ~ pattern {
+                # Get the comment symbol for this comment
+                match($0, /(\/\/|#)/)
+                symbol = substr($0, RSTART, RLENGTH)
+		project = $2
+		version = $5
+		printf "%s %s, version %d, released %s\n", symbol, project, version+1, date >> tmp 
+		if (last_file != "" && version != last_version) {
+			printf "Version mismatch: File %s had version %d, File %s has version %d\n", last_file, last_version, FILENAME, version
+	        }	       
+		last_file = FILENAME
+		last_version = version
+		next
+	}
+	{
+             # Copy unchanged lines
+             print $0 >> tmp
+        }
+	
+	END {
+		# Copy each of the temp files over their corresponding originals
+                for (original in tempfiles) {
+			command = sprintf("mv '%s' '%s'", tempfiles[original], original)
+			system(command)
+		}
+	}
+
+' *.c *.h Makefile

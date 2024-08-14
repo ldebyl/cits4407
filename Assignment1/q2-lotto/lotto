@@ -1,0 +1,49 @@
+#!/bin/bash
+###############################################################################
+# lotto
+# Draws n lotto balls from r possible balls.
+# 
+# See man ./lotto.1 for details.
+#
+# Author: Lee de Byl (10306807@student.uwa.edu.au)
+###############################################################################
+
+# Default Parameters
+declare -i n=6  # Number of balls to be drawn
+declare -i r=45 # Number of balls to be drawn from.
+
+# Declare an associative array for the numbers drawn
+# This will be used to prevent duplicate numbers being
+# drawn. Being an indexed array, this makes it trivial
+# to return the drawn numbers in order.
+declare -a numbers
+
+# Get optional command line arguments, display 
+while getopts "n:r:" opt; do
+    case ${opt} in
+        n ) n=$OPTARG
+            ;;
+        r ) r=$OPTARG
+            ;;
+        [?])  echo "Usage: lotto [-n number] [-r number]"
+            exit
+            ;;
+    esac
+done
+
+# Draw n numbers
+for i in `seq 1 $n`; do
+    # Repeatedly draw numbers using the RANDOM environment variable
+    # until a number that hasn't already been drawn is drawn.
+    while : ; do
+        number=$((RANDOM % r + 1))
+        if [ ! ${numbers[number]} ]
+        then
+            numbers[${number}]=${number}
+            break
+        fi
+    done
+done
+
+# Output the numbers drawn from the indexed array (in index order).
+printf '%s\n' "${numbers[@]}"

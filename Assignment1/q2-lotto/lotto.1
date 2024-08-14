@@ -1,0 +1,26 @@
+.\" Manpage for lotto.
+.\" Contact 10306807@student.uwa.edu.au to correct errors or typos.
+.TH lotto 1 "15 April 2020" "1.0" "lotto man page"
+.SH NAME
+lotto \- generates unique random numbers within a given range, as per a typical Australian Lotto draw.
+.SH SYNOPSIS
+lotto [-n] [-r]
+.SH DESCRIPTION
+Generates n unique random numbers, each between 1 and r. The generated numbers are ordered from lowest to highest. By default, 6 random numbers are drawn, from 45 possible numbers.
+.SH OPTIONS
+.IP "-n"
+The number of balls to draw.
+.IP "-r"
+The number of balls to choose from.
+.SH RETURNS
+.IP 0
+Returns 0 if no errors occured.
+.SH SEE ALSO
+shuf(1)
+.SH BUGS
+.PP
+The script generates unique random numbers by repeatedly generating a random number until the first unseen random number is generated. The execution time of the script is therefore non-deterministic. In some cases, the script may take longer than average to execute. A future improvement would be to include a data structure that included the remaining available numbers, and randomly select and remove these elements. Alternatively, using an algorithm such as the Knuth-Fisher-Yates shuffling algorithm and taking the top-n elements would be a reasonable alterntive.
+.PP
+The number of balls to choose from cannot exceed 32,768.
+.SH AUTHOR
+Lee de Byl (10306807@student.uwa.edu.au)

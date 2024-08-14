@@ -1,0 +1,29 @@
+.\" Manpage for families.
+.\" Contact 10306807@student.uwa.edu.au to correct errors or typos.
+.TH families 1 "15 April 2020" "1.0" "family man page"
+.SH NAME
+families - generates a list of families where all members of a family aboard the Titanic survived.
+.SH SYNOPSIS
+families [filename]
+.SH DESCRIPTION
+.PP
+The script consumes the Titanic data set available at
+https://www.kaggle.com/paytontaylor/titanic-dataset-observations 
+which details the list of passengers aboard the Titanic, and whether they survived. From this list,
+the script generates a list of families where all family members survived.
+.PP
+For the purpose of this excercise, a family is defined as two or more people having the same surname. The surname is derived from the forth field and consists of all characters up until the first comma.
+.PP
+The output consists of the sorted, unique names of familes that meet the criteria.
+.SH OPTIONS
+.IP [filename]
+The filname to read the dataset from. If not provided, the dataset is read from titanicdata.csv
+.SH BUGS
+.PP
+The script assumes that the input CSV file is specifically formatted as retrieved from the URL above. Behaviour of the program
+is undefined in other cases and will not robustly handle reformatting by programs such as Excel.
+.PP
+The program does not perform any validation of the input file format, nor does it check that the input
+file exists. awk will raise an error if the input file does not exist, or other parsing errors occured.
+.SH AUTHOR
+Lee de Byl (10306807@student.uwa.edu.au)

@@ -1,0 +1,31 @@
+<!DOCTYPE html>                                                                                                   
+<html>
+    <head>
+    <meta charset="utf-8"/>        
+    <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+    <body>
+        <div id='chartDiv' style='height:100vh'></div>
+    </body>
+        <script>
+var text=["help3002 - Project: Running multiple processes at ","help3002 - Project Design Question","help3002 - Project - assignports.sh","help3002 - Some Project Questions","help3002 - can't run portsinuse.sh","help3002 - project client","help3002 - setsockopt works for some server instan","help3003 - Successfully Running The Makefile On Yo","help3002 - Week 8 Lecture Recording","help3002 - preparation of project","help3002 - Is using the sockets module allowed for","help3002 - Concurrent requests?","help3403 - Looking for group for project 2","help5501 - Announcements: project, exam, previous ","help3002 - The shellscripts provided on the Gettin","help3002 - Change to &quot;makeform.sh&quot; - imp","help3002 - Project - Final Returned Result to Brow","help3002 - CSV Input","help3002 - Project description updated","help2200 - Lab 7","help3002 - UDP","help1001 - CSmarks Feedback File","help3002 - Initial Landing page as HTML document o","help3002 - Two Programming Languages...Can we mix ","help3403 - Can CITS5505 and CITS3403 students work","help3002 - Project - Python Library","help3002 - Project","help3002 - Project - Java Sockets","help3003 - Ambient","help3002 - Small Typo in getting started page."];var data={y:text,
+x:[253,247,147,126,123,121,116,107,98,91,90,88,87,86,82,77,76,75,75,73,72,66,65,65,62,61,61,60,59,59],
+text: text, textposition:"auto", type:"bar", orientation: "h"};
+            var chartDiv=document.getElementById('chartDiv');
+            var layout = {
+                height: 2200,
+                yaxis: {
+                  title: 'Forum Post',
+                  type: 'category',
+                  automargin: true,
+                  autotick: true,
+                  showticklabels: false
+              },
+              xaxis: {
+                title: 'Visits'
+              },
+              title:'UWA Department of Computer Science - Help Forum Activity (Hits)'
+            };
+            Plotly.plot(chartDiv, [data], layout);
+        </script>
+    </body>
+</html>
